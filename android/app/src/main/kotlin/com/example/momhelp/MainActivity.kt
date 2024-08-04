@@ -1,13 +1,10 @@
 package com.example.momhelp
 
 import android.app.AlarmManager
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -37,10 +34,9 @@ class MainActivity: FlutterActivity(){
         channel.setMethodCallHandler { call, result ->
             if (call.method == "alarmQueue") {
                 val time = call.argument<Long>("alarmTime")
-                val stocks = call.argument<String>("stocks")
                 val id = call.argument<Int>("id")
                 val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                val intent = Intent(this, AlarmReceiver::class.java)
+                val intent = Intent(this, CustomAlarmReceiver::class.java)
                 intent.putExtra("id", id)
                 val pendingIntent = PendingIntent.getBroadcast(
                     this,
@@ -59,7 +55,7 @@ class MainActivity: FlutterActivity(){
 
             } else if (call.method == "setAlarm") {
                 val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                val intent = Intent(this, AlarmReceiver::class.java)
+                val intent = Intent(this, CustomAlarmReceiver::class.java)
                 val alarmIntent =
                     PendingIntent.getBroadcast(this, 3, intent, PendingIntent.FLAG_IMMUTABLE)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
