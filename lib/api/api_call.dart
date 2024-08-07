@@ -43,18 +43,21 @@ Future<AirQualityResponse> getAirData(
 }
 Future<WeatherData> fetchGetWeatherDataWithLatLon({required String lat,required String lon})async {
   final Dio _dio = Dio();
+  print("fetch function");
   final String _apiKey = Env.weatherApikey; // 여기에 실제 API 키를 넣으세요.
+  print("lat: $lat, lon: $lon");
 
   try {
     final response = await _dio.get(
       'https://api.openweathermap.org/data/2.5/weather',
       queryParameters: {
-        'lat':lat,
-        'lon':lon,
+        'lat':double.parse(lat),
+        'lon':double.parse(lon),
         'appid': _apiKey,
         'units': 'metric', // 섭씨 온도로 데이터를 받기 위한 옵션
       },
     );
+    print(response.data);
 
     // JSON 응답을 WeatherData 모델로 변환
     return WeatherData.fromJson(response.data);
