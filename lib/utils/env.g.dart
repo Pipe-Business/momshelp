@@ -14,5 +14,5 @@ final class _Env {
   static const String weatherApikey = '62eb52d8c5d99a9bc5597964973b7233';
 
   static const String airApikey =
-      'SBgbNGcI2cTJyANHwjxkSq2T1GMr1Hv7QHca4hRIJ%2BEPpwFj%2FY8ebIURUIwWkhF7Qq8DZWQutQsGVMHWUA9VVw%3D%3D';
+      'SBgbNGcI2cTJyANHwjxkSq2T1GMr1Hv7QHca4hRIJ+EPpwFj/Y8ebIURUIwWkhF7Qq8DZWQutQsGVMHWUA9VVw==';
 }

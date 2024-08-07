@@ -57,13 +57,19 @@ class _TimeSettingDialogState extends State<TimeSettingDialog> {
 
       try{
         Workmanager().registerPeriodicTask(alarmId.toString(), "push data",
-            initialDelay:duration,frequency: Duration(days: 1));
+            initialDelay:duration,frequency: Duration(days: 1),
+          constraints: Constraints(
+            networkType: NetworkType.unmetered, // 네트워크 연결이 필요함
+
+          ),
+
+        );
         print("success regist workmanage");
       }catch (e){
         print(e);
       }
 
-      _showSnackBar(context, '${duration.inHours}시간 ${duration.inMinutes}분 후에 알림이 울립니다.');
+      _showSnackBar(context, '${duration.inHours}시간 ${duration.inMinutes%60}분 후에 알림이 울립니다.');
     } else {
       _showSnackBar(context, '시간을 선택해주세요.');
     }

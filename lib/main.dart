@@ -67,8 +67,12 @@ void callbackDispatcher() {
       }
     }
     if (task == "push data" || task== Workmanager.iOSBackgroundTask) {
-      print("Native called background task: $task");
-      await fetchNetworkDataAndShowNotification();
+      try{
+        print("Native called background task: $task");
+        await fetchNetworkDataAndShowNotification();
+      }catch(e){
+        print(e);
+      }
     }
 
     return Future.value(true);
@@ -82,7 +86,7 @@ Future<void> fetchNetworkDataAndShowNotification() async {
   }
   print("call function");
   // NotificationService().initNotification();
-  final latlng = "37.5111054,127.0446953";//await getCurrentLocationOrigin();
+  final latlng = await getCurrentLocationOrigin();
   print("locagion $latlng");
 
   print(latlng);
@@ -97,7 +101,7 @@ Future<void> fetchNetworkDataAndShowNotification() async {
     final data = air.body.items
         .where((element) => element.informData == getDateToday())
         .toList();
-    String name = "승호";// await _loadNickNameOrigin();
+    String name =  await _loadNickNameOrigin();
     String propt =
         "너는 엄마의 역할을 해서 자식에게 날씨 정보를 알려주는 역할이야 실제 엄마처럼 반말로 말해주고 친근하게 이름을 불러줘, 이름은 ${name} 이야 날씨는 정보 :  ${weather.weather},기온: ${weather.main?.temp}, 체감온도: ${weather.main?.feels_like},  습도: ${weather.main?.humidity}  미세먼지:  ${data.toString()},  이 데이터는 바로 TTS 에 연동시킬거기 떄문에 특수문자 없이 그냥 텍스트로 해줘";
     print(propt);
@@ -133,7 +137,6 @@ void main() async {
   NotificationService().initNotification();
   await SharedPreferences.getInstance();
   Workmanager().initialize(callbackDispatcher);
-  fetchNetworkDataAndShowNotification();
   runApp(const MyApp());
 }
 
