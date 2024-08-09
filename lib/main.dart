@@ -1,5 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +12,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:momhelp/api/api_call.dart';
+import 'package:momhelp/common/fetch_translator.dart';
 import 'package:momhelp/utils/background_notification.dart';
 import 'package:momhelp/utils/date.dart';
 import 'package:momhelp/utils/env.dart';
@@ -16,7 +21,19 @@ import 'package:momhelp/widget/time_setting_dialog.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:translator/translator.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+String getDeviceLocale() {
+  String r = defaultTargetPlatform == TargetPlatform.iOS
+      ? WidgetsBinding.instance.window.locale.toString()
+      : Platform.localeName;
+  if(r=="zh_Hans_CN")
+    return 'zh_Hans_CN';
+  return r;
+}
 
 Future<String> _loadNickNameOrigin() async {
   final prefs = await SharedPreferences.getInstance();
@@ -47,7 +64,7 @@ Future<String> getCurrentLocationOrigin() async {
       desiredAccuracy: LocationAccuracy.high,
     );
     return "${position.latitude},${position.longitude}";
-  } catch (e,stacktace) {
+  } catch (e, stacktace) {
     print(stacktace);
     throw e;
   }
@@ -57,20 +74,21 @@ Future<String> getCurrentLocationOrigin() async {
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     print("execute task $task / ${Workmanager.iOSBackgroundTask}");
-    if(Platform.isIOS){
-      try{
+    if (Platform.isIOS) {
+      try {
         print("ios Native called background task: $task");
+
         await fetchNetworkDataAndShowNotification();
         print("end function");
-      }catch(e){
+      } catch (e) {
         print(e);
       }
     }
-    if (task == "push data" || task== Workmanager.iOSBackgroundTask) {
-      try{
+    if (task == "push data" || task == Workmanager.iOSBackgroundTask) {
+      try {
         print("Native called background task: $task");
         await fetchNetworkDataAndShowNotification();
-      }catch(e){
+      } catch (e) {
         print(e);
       }
     }
@@ -79,31 +97,43 @@ void callbackDispatcher() {
   });
 }
 
-Future<void> fetchNetworkDataAndShowNotification() async {
-
-  if(Platform.isIOS){
-    SharedPreferences.getInstance();
-  }
+Future<String> getAiGenerateData() async {
+  SharedPreferences.getInstance();
   print("call function");
-  // NotificationService().initNotification();
   final latlng = await getCurrentLocationOrigin();
   print("locagion $latlng");
-
-  print(latlng);
   try {
+    final language = getDeviceLocale();
     final weather = await fetchGetWeatherDataWithLatLon(
         lat: latlng.split(',')[0], lon: latlng.split(',')[1]);
     print(weather);
     print(getDateToday());
     print(getDateTime());
     final air = await getAirData(date: getDateToday(), time: getDateTime());
-    print(air);
-    final data = air.body.items
-        .where((element) => element.informData == getDateToday())
-        .toList();
-    String name =  await _loadNickNameOrigin();
-    String propt =
-        "너는 엄마의 역할을 해서 자식에게 날씨 정보를 알려주는 역할이야 실제 엄마처럼 반말로 말해주고 친근하게 이름을 불러줘, 이름은 ${name} 이야 날씨는 정보 :  ${weather.weather},기온: ${weather.main?.temp}, 체감온도: ${weather.main?.feels_like},  습도: ${weather.main?.humidity}  미세먼지:  ${data.toString()},  이 데이터는 바로 TTS 에 연동시킬거기 떄문에 특수문자 없이 그냥 텍스트로 해줘";
+    print("air $air");
+    var data;
+    if (air.body.totalCount==0){
+      data=[];
+
+    }else{
+       data = air.body.items
+          .where((element) => element.informData == getDateToday())
+          .toList();
+    }
+    print("미세먼지 :$data");
+    String name = await _loadNickNameOrigin();
+    var propt ="";
+    if (language == "ko_KR") {
+      // 한국어의 경우 미세먼지 정보 포함
+      propt =
+          "너는 엄마의 역할을 해서 자식에게 날씨 정보를 알려주는 역할이야, 기계 같은 느낌이 나면 절대로 안되고, 실제 엄마처럼 반말로 말해주고 친근하게 이름을 불러주고 날씨 수치데이터를 추상적으로 표현해서 말해줘, 이름은 ${name} 이야 날씨는 정보 : ${weather.weather},기온: ${weather.main?.temp}, 체감온도: ${weather.main?.feels_like},  습도: ${weather.main?.humidity} 미세먼지 :  ${data.length>1 ? data[0].informData:""} 또한  수치적인 데이터를 그대로 말하는게 아닌 추상적으로 말해주고, 날씨 습도등을 고려한 옷차림 추천도 해줘 특수문자 없이 그냥 텍스트로 해줘";
+    } else {
+      // 한국을 제외한 다른 나라의 경우 미세먼지 데이터 제외시킴
+      propt =
+          "너는 엄마의 역할을 해서 자식에게 날씨 정보를 알려주는 역할이야, 기계 같은 느낌이 나면 절대로 안되고, 실제 엄마처럼 반말로 말해주고 친근하게 이름을 불러주고 날씨 수치데이터를 추상적으로 표현해서 말해줘, 이름은 ${name} 이야 날씨는 정보 : ${weather.weather},기온: ${weather.main?.temp}, 체감온도: ${weather.main?.feels_like},  습도: ${weather.main?.humidity} 또한 수치적인 데이터를 그대로 말하는게 아닌 추상적으로 말해주고, 날씨 습도등을 고려한 옷차림 추천도 해줘 특수문자 없이 그냥 텍스트로 해줘";
+      propt =
+          (await translateText(propt, from: 'ko', to: language.split('_')[0]));
+    }
     print(propt);
     Gemini.init(apiKey: Env.gemApiKey);
     final gemini = Gemini.instance;
@@ -112,31 +142,33 @@ Future<void> fetchNetworkDataAndShowNotification() async {
     print("value :$value");
     print(value?.output);
     var result = "";
-    await backgroundNotification(
-        title: "알림", content: value?.output ?? "Gemini api error");
-    value?.content?.parts?.map((e) {
-      if (e.text != null) {
-        result += e.text!;
-      }
-    });
+    return value!.output!;
   } catch (e) {
     print(e);
+    return "error";
   }
-  // gemini.text(propt).then((value) {
-  //   if (value?.output != null) {
-  //     NotificationService().showNotification(title: "알림", body: "${value!.output}");
-  //   }
-  // });
-  // 여기서 네트워크 요청을 수행합니다
-  // 예: final response = await http.get(Uri.parse('https://api.example.com/data'));
+}
+
+Future<void> fetchNetworkDataAndShowNotification() async {
+  final data = await getAiGenerateData();
+  await backgroundNotification(title: "알림", content: data);
+}
+
+Future<String> translateText(String text,
+    {String from = 'auto', String to = 'en'}) async {
+  GoogleTranslator translator = GoogleTranslator();
+  var translation = await translator.translate(text, from: from, to: to);
+  return translation.text;
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterForegroundTask.initCommunicationPort();
+  print(getDeviceLocale());
   Gemini.init(apiKey: Env.gemApiKey);
   NotificationService().initNotification();
   await SharedPreferences.getInstance();
-  Workmanager().initialize(callbackDispatcher);
+  Workmanager().initialize(callbackDispatcher,isInDebugMode: true);
   runApp(const MyApp());
 }
 
@@ -146,6 +178,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // context가 없는 곳에서 context를 사용할 수 있는 방
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -184,6 +217,7 @@ class _MyHomePageState extends State<MyHomePage> {
         bool serviceEnabled;
         LocationPermission permission;
         serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
         if (!serviceEnabled) {
           throw "permission error";
         }
@@ -199,12 +233,15 @@ class _MyHomePageState extends State<MyHomePage> {
         final statuses = await [
           Permission.scheduleExactAlarm,
           Permission.notification,
-          Permission.locationWhenInUse
+          Permission.locationWhenInUse,
+          Permission.backgroundRefresh,
         ].request();
 
         if (statuses[Permission.scheduleExactAlarm]!.isGranted ||
             statuses[Permission.locationWhenInUse]!.isGranted ||
-            statuses[Permission.notification]!.isGranted) {
+            statuses[Permission.backgroundRefresh]!.isGranted ||
+            statuses[Permission.notification]!.isGranted
+        ) {
           // 권한이 허용된 경우
           print("권한이 허용되었습니다.");
         } else {
@@ -244,10 +281,10 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('닉네임 입력'),
+          title: const Text('닉네임 입력'),
           content: TextField(
             controller: _controller,
-            decoration: InputDecoration(hintText: '닉네임을 입력하세요'),
+            decoration: const InputDecoration(hintText: '닉네임을 입력하세요'),
           ),
           actions: <Widget>[
             TextButton(
@@ -263,7 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
                 Navigator.of(context).pop();
               },
-              child: Text('확인'),
+              child: const Text('확인'),
             ),
           ],
         );
@@ -299,34 +336,16 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _incrementCounter() async {
-    final latlng = await getCurrentLocation();
-
-    final gemini = Gemini.instance;
-    print(latlng);
-    final weather =
-        await fetchGetWeatherDataWithLatLon(lat: latlng[0], lon: latlng[1]);
-    print(weather);
-    print(getDateToday());
-    print(getDateTime());
-    final air = await getAirData(date: getDateToday(), time: getDateTime());
-    print(air);
-    final data = air.body.items
-        .where((element) => element.informData == getDateToday())
-        .toList();
-    String name = await _loadNickname();
-    String propt =
-        "너는 엄마의 역할을 해서 자식에게 날씨 정보를 알려주는 역할이야 실제 엄마처럼 자식을 응원하는 멘트도 쳐줘, 너의 이름은 ${name} 이고 이름으로 불러줘 날씨 정보는 ${weather.toString()} 이거고 미세먼지 지역은 이거야 여기 위치는 서울이야 ${data.toString()} 이 데이터는 바로 TTS 에 연동시킬거기 떄문에 특수문자 없이 그냥 텍스트로 해줘 그리고 엄마니까 반말로해 친근하게 ";
-    gemini.text(propt).then((value) {
-      FlutterTts tts = FlutterTts();
-      if (value?.output != null) {
-        setState(() {
-          result = value!.output!;
-        });
-
-        tts.speak(value!.output!);
-      }
+  Future<void> _generateMomMessage() async {
+    FlutterTts tts = FlutterTts();
+    String language=getDeviceLocale();
+    tts.stop();
+    tts.setLanguage(language.split('_')[0]);
+    final data = await getAiGenerateData();
+    setState(() {
+      result = data;
     });
+    tts.speak(data);
   }
 
   Future<void> _selectTime(BuildContext context) async {
@@ -338,7 +357,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         _selectedTime = picked;
         timeStringDialog =
-            "${picked.period == DayPeriod.am ? "오전" : "오후"} ${picked.hour}시${picked.minute}분";
+            "${picked.period == DayPeriod.am ? "오전" : "오후"} ${picked.hourOfPeriod}시${picked.minute}분";
       });
     }
   }
@@ -365,28 +384,29 @@ class _MyHomePageState extends State<MyHomePage> {
               Column(
                 children: [
                   Container(
-                    margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("알림 시간", style: TextStyle(fontSize: 18)),
+                            const Text("알림 시간", style: TextStyle(fontSize: 18)),
                             Text(timeString,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 25,
                                 )),
                           ],
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         IconButton(
                           onPressed: () async {
                             showDialog(
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
-                                  title: Text("삭제하시겠습니까?"),
+                                  title: const Text("삭제하시겠습니까?"),
                                   actionsAlignment: MainAxisAlignment.center,
                                   actions: [
                                     TextButton(
@@ -406,7 +426,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(10))),
-                                      child: Text("네",
+                                      child: const Text("네",
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: Colors.white)),
@@ -421,7 +441,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         backgroundColor:
                                             Colors.grey[200], // 덜 강조된 배경색
                                       ),
-                                      child: Text(
+                                      child: const Text(
                                         "아니오",
                                         style: TextStyle(color: Colors.black),
                                       ),
@@ -432,7 +452,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             );
                             // 알람 삭제 로직
                           },
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.delete,
                             size: 34,
                           ),
@@ -440,7 +460,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
                   ),
-                  Divider()
+                  const Divider()
                 ],
               ),
             if (timeString.isEmpty)
@@ -448,14 +468,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   Container(
                       width: double.infinity,
-                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      child: Text(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      child: const Text(
                         "원하는 시간에 날씨정보를 요약해서 들어볼수 있어요",
                         textAlign: TextAlign.center,
                       )),
                   Container(
                     width: double.infinity,
-                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
@@ -466,42 +487,13 @@ class _MyHomePageState extends State<MyHomePage> {
                         await showDialog(
                           context: context,
                           builder: (context) {
-                            return TimeSettingDialog();
-                            // return Dialog(
-                            //   child: Padding(
-                            //     padding: const EdgeInsets.all(8.0),
-                            //     child: Column(
-                            //       mainAxisSize: MainAxisSize.min,
-                            //       children: [
-                            //         Text("알람을 울릴 시간을 설정해주세요"),
-                            //         Container(
-                            //           child: Row(
-                            //             mainAxisAlignment: MainAxisAlignment.center,
-                            //             crossAxisAlignment: CrossAxisAlignment.center,
-                            //             children: [
-                            //               Text(timeStringDialog)
-                            //             ],
-                            //           ),
-                            //         ),
-                            //         ElevatedButton(
-                            //           onPressed: () => _selectTime(context),
-                            //           child: Text("시간 설정하기"),
-                            //         ),
-                            //         ElevatedButton(
-                            //           onPressed: () =>
-                            //               _onConfirmPressed(context, channel),
-                            //           child: Text("확인"),
-                            //         ),
-                            //       ],
-                            //     ),
-                            //   ),
-                            // );
+                            return const TimeSettingDialog();
                           },
                         );
                         _loadStoredTime();
                         setState(() {});
                       },
-                      child: Text(
+                      child: const Text(
                         '알람 추가하기',
                         style: TextStyle(color: Colors.white),
                       ),
@@ -509,49 +501,51 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
-            Spacer(),
+            const Spacer(),
             Image.asset(
               "assets/images/mom_image.png",
               height: 300,
             ),
-            Spacer(),
+
+            SingleChildScrollView(
+              child: Container(
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                height: 150,
+                child: SingleChildScrollView(
+                  child: Text(
+                    result,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              width: double.infinity,
+              height: 48,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    _generateMomMessage();
+                  },
+                  child: const Text(
+                    "엄마의 말 들어보기",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  )),
+            ),
+            const Spacer(),
             // TODO : admob 자리
             Container(
               height: 50,
             ),
-
-            // Container(
-            //   margin: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            //   child: Text(
-            //     result,
-            //     style: TextStyle(fontSize: 14),
-            //   ),
-            // ),
-            //
-            // Container(
-            //   width: double.infinity,
-            //   height: 48,
-            //   margin: EdgeInsets.symmetric(horizontal: 20),
-            //   child: ElevatedButton(
-            //     style: ElevatedButton.styleFrom(
-            //       shape: RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(10)
-            //       ),
-            //       backgroundColor: Colors.black,
-            //     ),
-            //       onPressed: () {
-            //         _incrementCounter();
-            //       },
-            //       child: Text("엄마의 말 들어보기", style: TextStyle(color: Colors.white, fontSize: 20),)),
-            // ),
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _incrementCounter,
-      //   tooltip: 'Increment',
-      //   child: const Icon(Icons.add),
-      // ),
     );
   }
 }
