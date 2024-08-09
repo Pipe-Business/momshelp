@@ -54,19 +54,37 @@ class _TimeSettingDialogState extends State<TimeSettingDialog> {
       await prefs.setInt('alarmId', alarmId + 1);
 
       try {
-        Workmanager().registerPeriodicTask(
-          alarmId.toString(),
-          "push data",
-          initialDelay: Duration(seconds: 1),
-          frequency: Duration(days: 1),
-          // existingWorkPolicy: ExistingWorkPolicy.keep,
-          // backoffPolicy: BackoffPolicy.linear,
-          // backoffPolicyDelay: Duration(minutes: 15),
-          // constraints: Constraints(
-          //   networkType: NetworkType.connected,
-          //   requiresBatteryNotLow: true,
-          // ),
-        );
+        if(Platform.isIOS){
+          const iOSBackgroundProcessingTask = "be.tramckrijte.workmanagerExample.iOSBackgroundProcessingTask";
+          Workmanager().registerPeriodicTask(
+            iOSBackgroundProcessingTask,
+            iOSBackgroundProcessingTask,
+            initialDelay: Duration(seconds: 1),
+            frequency: Duration(days: 1),
+            existingWorkPolicy: ExistingWorkPolicy.keep,
+            backoffPolicy: BackoffPolicy.linear,
+            backoffPolicyDelay: Duration(minutes: 15),
+            constraints: Constraints(
+              networkType: NetworkType.connected,
+              requiresBatteryNotLow: true,
+            ),
+          );
+        }else{
+
+          Workmanager().registerPeriodicTask(
+            alarmId.toString(),
+            "push data",
+            initialDelay: Duration(seconds: 1),
+            frequency: Duration(days: 1),
+            existingWorkPolicy: ExistingWorkPolicy.keep,
+            backoffPolicy: BackoffPolicy.linear,
+            backoffPolicyDelay: Duration(minutes: 15),
+            constraints: Constraints(
+              networkType: NetworkType.connected,
+              requiresBatteryNotLow: true,
+            ),
+          );
+        }
         print("success regist workmanage");
       } catch (e) {
         print(e);

@@ -217,6 +217,7 @@ class _MyHomePageState extends State<MyHomePage> {
         bool serviceEnabled;
         LocationPermission permission;
         serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
         if (!serviceEnabled) {
           throw "permission error";
         }
@@ -232,12 +233,15 @@ class _MyHomePageState extends State<MyHomePage> {
         final statuses = await [
           Permission.scheduleExactAlarm,
           Permission.notification,
-          Permission.locationWhenInUse
+          Permission.locationWhenInUse,
+          Permission.backgroundRefresh,
         ].request();
 
         if (statuses[Permission.scheduleExactAlarm]!.isGranted ||
             statuses[Permission.locationWhenInUse]!.isGranted ||
-            statuses[Permission.notification]!.isGranted) {
+            statuses[Permission.backgroundRefresh]!.isGranted ||
+            statuses[Permission.notification]!.isGranted
+        ) {
           // 권한이 허용된 경우
           print("권한이 허용되었습니다.");
         } else {
