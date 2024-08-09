@@ -54,6 +54,11 @@ dependencies:
       ref: ios-bg-tasks-enh-final
   flutter_local_notifications: ^17.2.1+2
   flutter_foreground_task: ^8.1.0
+  device_info_plus: ^10.1.1
+  flutter_localization: ^0.2.1
+  translator: ^1.0.0
+  fluttertoast: ^8.2.6
+  flutter_background: ^1.2.0
 
 dev_dependencies:
   flutter_test:

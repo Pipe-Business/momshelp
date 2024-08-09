@@ -35,7 +35,7 @@ class _TimeSettingDialogState extends State<TimeSettingDialog> {
 
       // 새로운 시간 문자열 생성
       String savedTime =
-          "${_selectedTime!.period == DayPeriod.am ? "오전" : "오후"} ${_selectedTime!.hour}시 ${_selectedTime!.minute}분";
+          "${_selectedTime!.period == DayPeriod.am ? "오전" : "오후"} ${_selectedTime!.hourOfPeriod}시 ${_selectedTime!.minute}분";
 
       // 시간 저장
       await prefs.setString('lastSetTime', savedTime);
@@ -53,32 +53,38 @@ class _TimeSettingDialogState extends State<TimeSettingDialog> {
 
       await prefs.setInt('alarmId', alarmId + 1);
 
-
-
-      try{
-        Workmanager().registerPeriodicTask(alarmId.toString(), "push data",
-            initialDelay:duration,frequency: Duration(days: 1),
-          constraints: Constraints(
-            networkType: NetworkType.unmetered, // 네트워크 연결이 필요함
-
-          ),
-
+      try {
+        Workmanager().registerPeriodicTask(
+          alarmId.toString(),
+          "push data",
+          initialDelay: Duration(seconds: 1),
+          frequency: Duration(days: 1),
+          // existingWorkPolicy: ExistingWorkPolicy.keep,
+          // backoffPolicy: BackoffPolicy.linear,
+          // backoffPolicyDelay: Duration(minutes: 15),
+          // constraints: Constraints(
+          //   networkType: NetworkType.connected,
+          //   requiresBatteryNotLow: true,
+          // ),
         );
         print("success regist workmanage");
-      }catch (e){
+      } catch (e) {
         print(e);
       }
 
-      _showSnackBar(context, '${duration.inHours}시간 ${duration.inMinutes%60}분 후에 알림이 울립니다.');
+      _showSnackBar(context,
+          '${duration.inHours}시간 ${duration.inMinutes % 60}분 후에 알림이 울립니다.');
     } else {
       _showSnackBar(context, '시간을 선택해주세요.');
     }
   }
+
   void _showSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -106,7 +112,6 @@ class _TimeSettingDialogState extends State<TimeSettingDialog> {
         TextButton(
           onPressed: () {
             _onConfirmPressed(context);
-
             Navigator.of(context).pop(_selectedTime); // 선택된 시간을 반환하고 다이얼로그 닫기
           },
           child: const Text('확인'),
