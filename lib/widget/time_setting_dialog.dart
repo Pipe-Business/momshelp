@@ -55,12 +55,13 @@ class _TimeSettingDialogState extends State<TimeSettingDialog> {
 
       try {
         if(Platform.isIOS){
-          const iOSBackgroundProcessingTask = "be.tramckrijte.workmanagerExample.iOSBackgroundProcessingTask";
-          Workmanager().registerPeriodicTask(
+          //	<string>task-identifier</string>
+          // info.plit 에 등록한것만 알람 가능 현재 oneOffTask 한번만 실행하는것만 지원됨 : ios 버전문제
+          const iOSBackgroundProcessingTask = "task-identifier";
+          Workmanager().registerOneOffTask(
             iOSBackgroundProcessingTask,
             iOSBackgroundProcessingTask,
-            initialDelay: Duration(seconds: 1),
-            frequency: Duration(days: 1),
+            initialDelay: duration,
             existingWorkPolicy: ExistingWorkPolicy.keep,
             backoffPolicy: BackoffPolicy.linear,
             backoffPolicyDelay: Duration(minutes: 15),
@@ -74,14 +75,14 @@ class _TimeSettingDialogState extends State<TimeSettingDialog> {
           Workmanager().registerPeriodicTask(
             alarmId.toString(),
             "push data",
-            initialDelay: Duration(seconds: 1),
+            initialDelay: duration,
             frequency: Duration(days: 1),
             existingWorkPolicy: ExistingWorkPolicy.keep,
             backoffPolicy: BackoffPolicy.linear,
-            backoffPolicyDelay: Duration(minutes: 15),
+            backoffPolicyDelay: Duration(minutes: 15), // 실패시 15분뒤 다시 실행
             constraints: Constraints(
-              networkType: NetworkType.connected,
-              requiresBatteryNotLow: true,
+              networkType: NetworkType.connected, // 네트워크 연결되있어야 동작하는 옵션
+              requiresBatteryNotLow: false, // 배터리가 낮더라도 실행하는 옵션 true 일시 배터리 충분할때만 실행
             ),
           );
         }
