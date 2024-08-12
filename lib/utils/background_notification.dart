@@ -7,11 +7,10 @@ Future<void> backgroundNotification(
       FlutterLocalNotificationsPlugin();
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
-  final DarwinInitializationSettings initializationSettingsDarwin =
-      DarwinInitializationSettings();
+  // final DarwinInitializationSettings initializationSettingsDarwin =
+  //     DarwinInitializationSettings();
   final InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin);
+      android: initializationSettingsAndroid,);
 
   // 텍스트 길어질시 알림 확장시키기
   await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
