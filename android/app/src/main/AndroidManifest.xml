@@ -45,7 +45,7 @@
         </intent>
     </queries>
     <application
-        android:label="momhelp"
+        android:label="mom's mind"
         android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="true"
         android:name="${applicationName}"
@@ -91,7 +91,7 @@
         </receiver>
 
         <service
-            android:name="com.example.momhelp.ForegroundService"
+            android:name="com.pipebuilder.momsmind.ForegroundService"
             android:exported="false"
             android:stopWithTask="false" />
         <service

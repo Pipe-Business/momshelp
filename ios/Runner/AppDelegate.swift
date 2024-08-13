@@ -10,7 +10,7 @@ import BackgroundTasks
  GeneratedPluginRegistrant.register(with: self)
 
     if #available(iOS 13.0, *) {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.example.momhelp.dailyNotification", using: nil) { task in
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.pipebuilder.momsmind.dailyNotification", using: nil) { task in
             self.handleDailyNotification(task: task as! BGAppRefreshTask)
         }
     }
@@ -29,7 +29,7 @@ import BackgroundTasks
       queue.addOperation {
         // Call the Flutter method to show notification
         let controller : FlutterViewController = self.window?.rootViewController as! FlutterViewController
-        let channel = FlutterMethodChannel(name: "com.example.momhelp/background", binaryMessenger: controller.binaryMessenger)
+        let channel = FlutterMethodChannel(name: "com.pipebuilder.momsmind/background", binaryMessenger: controller.binaryMessenger)
         channel.invokeMethod("showNotification", arguments: nil)
       }
 
@@ -45,7 +45,7 @@ import BackgroundTasks
 
     @available(iOS 13.0, *)
     func scheduleNextDailyNotification() {
-      let request = BGAppRefreshTaskRequest(identifier: "com.example.momhelp.dailyNotification")
+      let request = BGAppRefreshTaskRequest(identifier: "com.pipebuilder.momsmind.dailyNotification")
       request.earliestBeginDate = Calendar.current.date(byAdding: .day, value: 1, to: Date())
 
       do {

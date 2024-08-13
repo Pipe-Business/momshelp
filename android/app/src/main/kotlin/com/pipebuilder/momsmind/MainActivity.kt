@@ -1,4 +1,4 @@
-package com.example.momhelp
+package com.pipebuilder.momsmind
 
 import android.app.AlarmManager
 import android.app.PendingIntent

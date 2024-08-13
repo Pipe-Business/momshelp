@@ -4,11 +4,11 @@
 <dict>
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
-        <string>com.example.momhelp.dailyNotification</string>
+        <string>com.pipebuilder.momsmind.dailyNotification</string>
     </array>
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
-        <string>com.example.momhelp.fetch</string>
+        <string>com.pipebuilder.momsmind.fetch</string>
     </array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>

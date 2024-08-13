@@ -1,4 +1,4 @@
-package com.example.momhelp
+package com.pipebuilder.momsmind
 
 import android.content.BroadcastReceiver
 import android.content.Context

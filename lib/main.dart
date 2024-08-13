@@ -1,35 +1,25 @@
-import 'dart:convert';
 import 'dart:io';
+
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:bubble/bubble.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter_localization/flutter_localization.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:momhelp/api/api_call.dart';
-import 'package:momhelp/common/fetch_translator.dart';
-import 'package:momhelp/data/air_entity.dart';
-import 'package:momhelp/data/weather_entity.dart';
-import 'package:momhelp/utils/background_notification.dart';
-import 'package:momhelp/utils/date.dart';
-import 'package:momhelp/utils/env.dart';
-import 'package:momhelp/utils/notification_service.dart';
-import 'package:momhelp/widget/speech_bubble.dart';
-import 'package:momhelp/widget/time_setting_dialog.dart';
+import 'package:momsmind/api/api_call.dart';
+import 'package:momsmind/data/air_entity.dart';
+import 'package:momsmind/data/weather_entity.dart';
+import 'package:momsmind/utils/background_notification.dart';
+import 'package:momsmind/utils/date.dart';
+import 'package:momsmind/utils/env.dart';
+import 'package:momsmind/utils/notification_service.dart';
+import 'package:momsmind/widget/time_setting_dialog.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
-import 'package:speech_bubble/speech_bubble.dart';
 import 'package:translator/translator.dart';
 import 'package:workmanager/workmanager.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 
 import 'common/permission_service.dart';
 
